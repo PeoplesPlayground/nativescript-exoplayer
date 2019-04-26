@@ -146,6 +146,10 @@ export const imageSourceProperty = new Property<Video, any>({
 });
 imageSourceProperty.register(Video);
 
+export const tokenProperty = new Property<Video, any>({
+    name: "tokenSource",
+});
+tokenProperty.register(Video);
 
 export const isLoadingProperty = new Property<Video, boolean>({
     name: "isLoading",
