@@ -88,7 +88,7 @@ export class Video extends VideoBase {
 	}
 
     [tokenProperty.setNative](value) {
-        this._setNativeToken(value ? value.android : null);
+        this._setNativeToken(value);
     }
 
 	[subtitleSourceProperty.setNative](value) {
@@ -377,8 +377,8 @@ export class Video extends VideoBase {
 	}
 
 	private _openVideo(): void {
-		if (this._src === null || this._token === null) {
-			console.log("src or token null")
+		if (!(this._src && this._token)) {
+			console.log("!src and token: " + this._src  + ", " + this._token);
 			return;
 		}
 		this.release();
@@ -397,7 +397,7 @@ export class Video extends VideoBase {
 			let trackSelector = new com.google.android.exoplayer2.trackselection.DefaultTrackSelector(trackSelection);
 			let loadControl = new com.google.android.exoplayer2.DefaultLoadControl();
 
-			let drmLicenseUrl = "https://cinemember.keydelivery.westeurope.media.azure.net/Widevine/?kid=cc90a99f-9e95-4430-b7b7-296f76e796b6";
+			let drmLicenseUrl = "https://audienceplayer.keydelivery.westeurope.media.azure.net/Widevine/?kid=2c8b81cd-0278-4665-b2a2-17dd6a9fa575";
 			let drmSchemeUuid = com.google.android.exoplayer2.C.WIDEVINE_UUID; //com.google.android.exoplayer2.util.Util.getDrmUuid("widevine");
 
             let licenseDataSourceFactory = new com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory("exoplayer");
@@ -415,17 +415,17 @@ export class Video extends VideoBase {
                 this.mediaDrm = null;
             }
 
-            console.log("This far!");
+            console.log("This far, using token: " + token);
 
             this.mediaDrm = com.google.android.exoplayer2.drm.FrameworkMediaDrm.newInstance(drmSchemeUuid);
             // DefaultDrmSessionManager<FrameworkMediaCrypto> drmSessionManager = null;
             this.drmSessionManager = new com.google.android.exoplayer2.drm.DefaultDrmSessionManager(drmSchemeUuid, this.mediaDrm, drmCallback, null, false);
 
-            let renderersFactory = new com.google.android.exoplayer2.DefaultRenderersFactory(this._context);
+            let renderersFactory = new com.google.android.exoplayer2.DefaultRenderersFactory(this._context, com.google.android.exoplayer2.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF);
 
             // this, renderersFactory, trackSelector, drmSessionManager
 			this.mediaPlayer =
-				com.google.android.exoplayer2.ExoPlayerFactory.newSimpleInstance(this._context, trackSelector, loadControl, this.drmSessionManager);
+				com.google.android.exoplayer2.ExoPlayerFactory.newSimpleInstance(this._context, renderersFactory, trackSelector, this.drmSessionManager);
 
 			if (this.textureSurface && !this.textureSurfaceSet) {
 				this.textureSurfaceSet = true;
@@ -456,14 +456,13 @@ export class Video extends VideoBase {
 							new com.google.android.exoplayer2.source.smoothstreaming.DefaultSsChunkSource.Factory(dsf), null, null);
 						break;
 					case this.TYPE.DASH:
-                        console.log("TYPE.DASH");
-                        const DashMediaSource = com.google.android.exoplayer2.source.dash.DashMediaSource;
-                        vs = new DashMediaSource.Factory(dsf);
-                        vs.setManifestParser(new com.google.android.exoplayer2.offline.FilteringManifestParser(new com.google.android.exoplayer2.source.dash.manifest.DashManifestParser(), null))
-                            .createMediaSource(uri);
+                        console.log("TYPE.DASH...");
+                        // const DashMediaSource = com.google.android.exoplayer2.source.dash.DashMediaSource;
+                        // vs = new DashMediaSource.Factory(dsf).setManifestParser(new com.google.android.exoplayer2.offline.FilteringManifestParser(new com.google.android.exoplayer2.source.dash.manifest.DashManifestParser(), null))
+                        //     .createMediaSource(uri);
 
-						// vs = new com.google.android.exoplayer2.source.dash.DashMediaSource(uri, dsf,
-						// 	new com.google.android.exoplayer2.source.dash.DefaultDashChunkSource.Factory(dsf), null, null);
+						vs = new com.google.android.exoplayer2.source.dash.DashMediaSource(uri, dsf,
+							new com.google.android.exoplayer2.source.dash.DefaultDashChunkSource.Factory(dsf), null, null);
 						break;
 					case this.TYPE.HLS:
 						vs = new com.google.android.exoplayer2.source.hls.HlsMediaSource(uri, dsf, null, null);
@@ -539,6 +538,9 @@ export class Video extends VideoBase {
 			}
 
 			this._setupMediaPlayerListeners();
+
+			console.log("before prepare");
+
 			this.mediaPlayer.prepare(vs);
 			if (this.autoplay === true) {
 				this.mediaPlayer.setPlayWhenReady(true);

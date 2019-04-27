@@ -71,6 +71,17 @@ function onImgSrcPropertyChanged(view, oldValue, newValue) {
     }
 }
 
+function onTokenPropertyChanged(view, oldValue, newValue) {
+    const video = view;
+    let value = newValue;
+
+    if (isString(value)) {
+        value = value.trim();
+        video.token = value;
+        video["_token"] = value;
+    }
+}
+
 /**
  * Video aspect/fill handling
  */
@@ -91,6 +102,7 @@ export class Video extends View {
     public android: any;
     public ios: any;
     public src: string; /// video source file
+    public token: string; //
     public imgSrc: string;
     public imgType: number = 1;
     public subtitles: string; /// subtitles source file
@@ -147,7 +159,8 @@ export const imageSourceProperty = new Property<Video, any>({
 imageSourceProperty.register(Video);
 
 export const tokenProperty = new Property<Video, any>({
-    name: "tokenSource",
+    name: "token",
+    valueChanged: onTokenPropertyChanged
 });
 tokenProperty.register(Video);
 
