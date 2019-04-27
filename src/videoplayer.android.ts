@@ -40,6 +40,8 @@ export class Video extends VideoBase {
 	private _boundStart = this.resumeEvent.bind(this);
 	private _boundStop = this.suspendEvent.bind(this);
 	private enableSubtitles: boolean = false;
+	private downloadCache: any;
+	private downloadDirectory: any;
 
 	public TYPE = {DETECT: 0, SS: 1, DASH: 2, HLS: 3, OTHER: 4};
 	public nativeView: any;
@@ -387,20 +389,25 @@ export class Video extends VideoBase {
 			this.startCurrentTimer();
 		}
 
+        if (com.google.android.exoplayer2.util.Util.maybeRequestReadExternalStoragePermission(/* activity= */ this._context, [android.net.Uri.parse(this._src)])) {
+            // The player will be reinitialized if the permission is granted.
+            return;
+        }
+
 		this.videoOpened = true; // we don't want to come back in here from texture system...
 
 		let am = nsUtils.ad.getApplicationContext().getSystemService(android.content.Context.AUDIO_SERVICE);
 		am.requestAudioFocus(null, android.media.AudioManager.STREAM_MUSIC, android.media.AudioManager.AUDIOFOCUS_GAIN);
 		try {
 			let bm = new com.google.android.exoplayer2.upstream.DefaultBandwidthMeter();
-			let trackSelection = new com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection.Factory(bm);
+			let trackSelection = new com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection.Factory();
 			let trackSelector = new com.google.android.exoplayer2.trackselection.DefaultTrackSelector(trackSelection);
 			let loadControl = new com.google.android.exoplayer2.DefaultLoadControl();
 
 			let drmLicenseUrl = "https://audienceplayer.keydelivery.westeurope.media.azure.net/Widevine/?kid=2c8b81cd-0278-4665-b2a2-17dd6a9fa575";
-			let drmSchemeUuid = com.google.android.exoplayer2.C.WIDEVINE_UUID; //com.google.android.exoplayer2.util.Util.getDrmUuid("widevine");
+			let drmSchemeUuid = com.google.android.exoplayer2.util.Util.getDrmUuid("widevine");
 
-            let licenseDataSourceFactory = new com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory("exoplayer");
+            let licenseDataSourceFactory = new com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory(com.google.android.exoplayer2.util.Util.getUserAgent(this._context, "ExoPlayerDemo"));
             let drmCallback = new com.google.android.exoplayer2.drm.HttpMediaDrmCallback(drmLicenseUrl, licenseDataSourceFactory);
 
             let token = this._token;
@@ -439,10 +446,8 @@ export class Video extends VideoBase {
 				this.mediaPlayer.setTextOutput(this._subtitlesView);
 			}
 
-
-			// DefaultHttpDataSourceFactory
-			// new DefaultHttpDataSourceFactory(Util.getUserAgent(this, "ExoPlayerDemo")
-			let dsf = new com.google.android.exoplayer2.upstream.DefaultDataSourceFactory(this._context, "NativeScript", bm);
+			// let dsf = new com.google.android.exoplayer2.upstream.DefaultDataSourceFactory(this._context, "NativeScript", bm);
+			let dsf = this.buildDataSourceFactory();
 			let ef = new com.google.android.exoplayer2.extractor.DefaultExtractorsFactory();
 
 			let vs, uri;
@@ -457,12 +462,12 @@ export class Video extends VideoBase {
 						break;
 					case this.TYPE.DASH:
                         console.log("TYPE.DASH...");
-                        // const DashMediaSource = com.google.android.exoplayer2.source.dash.DashMediaSource;
-                        // vs = new DashMediaSource.Factory(dsf).setManifestParser(new com.google.android.exoplayer2.offline.FilteringManifestParser(new com.google.android.exoplayer2.source.dash.manifest.DashManifestParser(), null))
-                        //     .createMediaSource(uri);
 
-						vs = new com.google.android.exoplayer2.source.dash.DashMediaSource(uri, dsf,
-							new com.google.android.exoplayer2.source.dash.DefaultDashChunkSource.Factory(dsf), null, null);
+                        vs = new com.google.android.exoplayer2.source.dash.DashMediaSource.Factory(dsf).setManifestParser(new com.google.android.exoplayer2.offline.FilteringManifestParser(new com.google.android.exoplayer2.source.dash.manifest.DashManifestParser(), null))
+                            .createMediaSource(uri);
+
+						// vs = new com.google.android.exoplayer2.source.dash.DashMediaSource(uri, dsf,
+						// 	new com.google.android.exoplayer2.source.dash.DefaultDashChunkSource.Factory(dsf), null, null);
 						break;
 					case this.TYPE.HLS:
 						vs = new com.google.android.exoplayer2.source.hls.HlsMediaSource(uri, dsf, null, null);
@@ -539,16 +544,17 @@ export class Video extends VideoBase {
 
 			this._setupMediaPlayerListeners();
 
-			console.log("before prepare");
-
-			this.mediaPlayer.prepare(vs);
 			if (this.autoplay === true) {
-				this.mediaPlayer.setPlayWhenReady(true);
+			 	this.mediaPlayer.setPlayWhenReady(true);
 			}
 			if (this.preSeekTime > 0) {
 				this.mediaPlayer.seekTo(this.preSeekTime);
 				this.preSeekTime = -1;
 			}
+
+            console.log("before prepare 2");
+            this.mediaPlayer.prepare(vs);
+
 			this.mediaState = SURFACE_READY;
 
 		} catch (ex) {
@@ -746,6 +752,37 @@ export class Video extends VideoBase {
 			this.interval = null;
 		}
 		this.fireCurrentTimeEvent();
+	}
+
+    private buildDataSourceFactory() {
+        const upstreamFactory = new com.google.android.exoplayer2.upstream.DefaultDataSourceFactory(this._context, new com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory(com.google.android.exoplayer2.util.Util.getUserAgent(this._context, "ExoPlayerDemo")));
+        return this.buildReadOnlyCacheDataSource(upstreamFactory, this.getDownloadCache());
+    }
+
+
+    private buildReadOnlyCacheDataSource(upstreamFactory, cache) {
+		return new com.google.android.exoplayer2.upstream.cache.CacheDataSourceFactory(cache, upstreamFactory, new com.google.android.exoplayer2.upstream.FileDataSourceFactory(),
+		/* cacheWriteDataSinkFactory= */ null,
+            com.google.android.exoplayer2.upstream.cache.CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR,
+		/* eventListener= */ null);
+	}
+
+	private getDownloadCache() {
+		if (this.downloadCache == null) {
+			let downloadContentDirectory = new java.io.File(this.getDownloadDirectory(), "downloads");
+			this.downloadCache = new com.google.android.exoplayer2.upstream.cache.SimpleCache(downloadContentDirectory, new com.google.android.exoplayer2.upstream.cache.NoOpCacheEvictor());
+		}
+		return this.downloadCache;
+	}
+
+	private getDownloadDirectory() {
+		if (this.downloadDirectory == null) {
+			this.downloadDirectory = this._context.getExternalFilesDir(null);
+			if (this.downloadDirectory == null) {
+				this.downloadDirectory = this._context.getFilesDir();
+			}
+		}
+		return this.downloadDirectory;
 	}
 
 
