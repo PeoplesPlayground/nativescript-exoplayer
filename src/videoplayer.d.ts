@@ -22,7 +22,7 @@ export declare class Video extends View {
   imgType: number;
   subtitles: string;
   subtitleSource: string;
-  observeCurrentTime: boolean;
+  // observeCurrentTime: boolean;
 
   /**
    * set true for the video to start playing when ready

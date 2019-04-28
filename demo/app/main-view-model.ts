@@ -103,7 +103,7 @@ export class HelloWorldModel extends Observable {
   public animate() {
     console.log("Animation");
 
-    const enums = require("ui/enums");
+    const enums = require("tns-core-modules/ui/enums");
     this._videoPlayer.animate({
       rotate: 360,
       duration: 3000,

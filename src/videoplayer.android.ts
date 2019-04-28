@@ -400,7 +400,7 @@ export class Video extends VideoBase {
 		am.requestAudioFocus(null, android.media.AudioManager.STREAM_MUSIC, android.media.AudioManager.AUDIOFOCUS_GAIN);
 		try {
 			let bm = new com.google.android.exoplayer2.upstream.DefaultBandwidthMeter();
-			let trackSelection = new com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection.Factory();
+			let trackSelection = new com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection.Factory(bm);
 			let trackSelector = new com.google.android.exoplayer2.trackselection.DefaultTrackSelector(trackSelection);
 			let loadControl = new com.google.android.exoplayer2.DefaultLoadControl();
 
@@ -411,9 +411,6 @@ export class Video extends VideoBase {
             let drmCallback = new com.google.android.exoplayer2.drm.HttpMediaDrmCallback(drmLicenseUrl, licenseDataSourceFactory);
 
             let token = this._token;
-
-            // let keyRequestHashMap = new java.util.HashMap();
-            // keyRequestHashMap.put("Authorization", "Bearer=" + token);
 
             drmCallback.setKeyRequestProperty("Authorization", "Bearer=" + token);
 
