@@ -3,6 +3,7 @@ import { Page } from "tns-core-modules/ui/page";
 import { isAndroid } from "tns-core-modules/platform";
 import { setInterval } from "tns-core-modules/timer";
 import { VideoFill } from "nativescript-exoplayer";
+import { entitlement} from '~/entitlement';
 
 export class HelloWorldModel extends Observable {
   public videoSrc: string;
@@ -21,9 +22,10 @@ export class HelloWorldModel extends Observable {
     this._videoPlayer = <any>mainpage.getViewById("nativeVideoPlayer");
     this.currentTime = "";
     this.videoDuration = "";
-    // this.videoSrc = "~/videos/big_buck_bunny.mp4";
-    this.videoSrc = "https://audienceplayer.streaming.mediaservices.windows.net/1e557078-4a47-4d05-b7ef-f4b3bc2a86a9/dip-en-dap-pannenkoeken-eten.ism/manifest(format=mpd-time-csf,encryption=cenc).mpd";
-    this.token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9jb3JlLmF1ZGllbmNlcGxheWVyLmNvbSIsImF1ZCI6Imh0dHA6XC9cL2NvcmUuYXVkaWVuY2VwbGF5ZXIuY29tIiwibmJmIjoxNTU2MzY5OTg2LCJleHAiOjE1NTYzNzExODYsInVybjptaWNyb3NvZnQ6YXp1cmU6bWVkaWFzZXJ2aWNlczpjb250ZW50a2V5aWRlbnRpZmllciI6IjJjOGI4MWNkLTAyNzgtNDY2NS1iMmEyLTE3ZGQ2YTlmYTU3NSJ9.iwzxdT5C9mXmx2MPWI4OCOS-KpwTi7-RNTr-cF28rCc";
+
+    this.videoSrc = entitlement.manifest;
+    this.token = entitlement.token;
+
     this.subtitlesSrc = "~/videos/sample.srt";
     this.trackVideoCurrentPosition();
   }

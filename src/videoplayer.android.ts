@@ -1,4 +1,4 @@
-
+﻿
 import { Video as VideoBase, VideoFill, videoSourceProperty, subtitleSourceProperty, tokenProperty } from "./videoplayer-common";
 import * as nsUtils from "tns-core-modules/utils/utils";
 import * as nsApp from "tns-core-modules/application";
