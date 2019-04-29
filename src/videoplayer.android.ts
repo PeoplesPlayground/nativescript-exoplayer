@@ -17,7 +17,7 @@ const SURFACE_WAITING: number = 0;
 const SURFACE_READY: number = 1;
 
 export class Video extends VideoBase {
-	private _textureView: any; /// android.widget.VideoView
+	private _surfaceView: any; /// android.view.SurfaceView
 	private _subtitlesView: any; /// com.google.android.exoplayer2.ui.SubtitleView
 	private videoWidth: number;
 	private videoHeight: number;
@@ -25,8 +25,6 @@ export class Video extends VideoBase {
     private _token: any;
 	private _subtitlesSrc: any;
 	private mediaState: number;
-	private textureSurface: any;
-	private textureSurfaceSet: boolean;
 	private mediaPlayer: any;
 	private mediaController: any;
 	private preSeekTime: number;
@@ -51,7 +49,7 @@ export class Video extends VideoBase {
 
 	constructor() {
 		super();
-		this._textureView = null;
+		this._surfaceView = null;
 		this.nativeView = null;
 		this.videoWidth = 0;
 		this.videoHeight = 0;
@@ -61,8 +59,6 @@ export class Video extends VideoBase {
 		this._src = null;
 
 		this.mediaState = SURFACE_WAITING;
-		this.textureSurface = null;
-		this.textureSurfaceSet = false;
 		this.mediaPlayer = null;
 		this.mediaController = null;
 		this.preSeekTime = -1;
@@ -97,37 +93,15 @@ export class Video extends VideoBase {
 		this._updateSubtitles(value ? value.android : null);
 	}
 
-	private _setupTextureSurface(): void {
-		if (!this.textureSurface) {
-			if (!this._textureView.isAvailable()) {
-				return;
-			}
-			this.textureSurface = new android.view.Surface(this._textureView.getSurfaceTexture());
-		}
-		if (this.textureSurface) {
-			if (!this.mediaPlayer) {
-				return;
-			}
-			if (!this.textureSurfaceSet) {
-				this.mediaPlayer.setVideoSurface(this.textureSurface);
-				this.mediaState = SURFACE_READY;
-			} else {
-				this.mediaState = SURFACE_WAITING;
-			}
-
-			if (!this.videoOpened) {
-				this._openVideo();
-			}
-		}
-	}
-
 	public createNativeView(): any {
 		const nativeView = new android.widget.RelativeLayout(this._context);
-		this._textureView = new android.view.TextureView(this._context);
-		this._textureView.setFocusable(true);
-		this._textureView.setFocusableInTouchMode(true);
-		this._textureView.requestFocus();
-		nativeView.addView(this._textureView);
+
+        this._surfaceView = new android.view.SurfaceView(this._context);
+        this._surfaceView.setSecure(true);
+		this._surfaceView.setFocusable(true);
+		this._surfaceView.setFocusableInTouchMode(true);
+		this._surfaceView.requestFocus();
+		nativeView.addView(this._surfaceView);
 
 		if (this.enableSubtitles) {
 			this._subtitlesView = new com.google.android.exoplayer2.ui.SubtitleView(this._context);
@@ -144,57 +118,17 @@ export class Video extends VideoBase {
 		super.initNativeView();
 		let that = new WeakRef(this);
 		this._setupMediaController();
-		this._textureView.setOnTouchListener(new android.view.View.OnTouchListener({
-			get owner(): Video {
-				return that.get();
-			},
-			onTouch: function (/* view, event */) {
-				if (this.owner) {
-					this.owner.toggleMediaControllerVisibility();
-				}
-				return false;
-			}
-		}));
-
-		this._textureView.setSurfaceTextureListener(new android.view.TextureView.SurfaceTextureListener(
-			{
-				get owner(): Video {
-					return that.get();
-				},
-				onSurfaceTextureSizeChanged: function (surface, width, height) {
-					console.log("SurfaceTexutureSizeChange", width, height);
-					this.owner._setupAspectRatio();
-				},
-
-				onSurfaceTextureAvailable: function (/* surface, width, height */) {
-					if (this.owner) {
-						this.owner._setupTextureSurface();
-					}
-				},
-
-				onSurfaceTextureDestroyed: function (/* surface */) {
-					// after we return from this we can't use the surface any more
-					if (!this.owner) {
-						return true;
-					}
-					if (this.owner.textureSurface !== null) {
-						this.owner.textureSurfaceSet = false;
-						this.owner.textureSurface.release();
-						this.owner.textureSurface = null;
-					}
-					if (this.owner.mediaController !== null) {
-						this.owner.mediaController.hide();
-					}
-					this.owner.release();
-
-					return true;
-				},
-
-				onSurfaceTextureUpdated: function (/* surface */) {
-					// do nothing
-				}
-			}
-		));
+		// this._surfaceView.setOnTouchListener(new android.view.View.OnTouchListener({
+		// 	get owner(): Video {
+		// 		return that.get();
+		// 	},
+		// 	onTouch: function (/* view, event */) {
+		// 		if (this.owner) {
+		// 			this.owner.toggleMediaControllerVisibility();
+		// 		}
+		// 		return false;
+		// 	}
+		// }));
 
 		nsApp.on(nsApp.suspendEvent, this._boundStop);
 		nsApp.on(nsApp.resumeEvent, this._boundStart);
@@ -260,9 +194,6 @@ export class Video extends VideoBase {
 				if (!this.owner) {
 					return;
 				}
-				if (!this.owner.textureSurfaceSet) {
-					this.owner._setupTextureSurface();
-				}
 
 				// PlayBackState
 				// 1 = IDLE
@@ -272,11 +203,11 @@ export class Video extends VideoBase {
 
 				if (playbackState === STATE_READY) {
 
-					// We have to fire this from here in the event the textureSurface isn't set yet...
-					if (!this.owner.textureSurfaceSet && !this.owner.eventPlaybackReady) {
-						this.owner.eventPlaybackReady = true;
-						this.owner._emit(VideoBase.playbackReadyEvent);
-					}
+					// // We have to fire this from here in the event the textureSurface isn't set yet...
+					// if (!this.owner.textureSurfaceSet && !this.owner.eventPlaybackReady) {
+					// 	this.owner.eventPlaybackReady = true;
+					// 	this.owner._emit(VideoBase.playbackReadyEvent);
+					// }
 					if (this.owner._onReadyEmitEvent.length) {
 						do {
 							this.owner._emit(this.owner._onReadyEmitEvent.shift());
@@ -334,33 +265,6 @@ export class Video extends VideoBase {
 	}
 
 	private _setupAspectRatio(): void {
-		if (!this._textureView) {
-			return
-		}
-		let viewWidth = this._textureView.getWidth();
-		let viewHeight = this._textureView.getHeight();
-		let aspectRatio = this.videoHeight / this.videoWidth;
-
-		let newWidth;
-		let newHeight;
-		if (viewHeight > (viewWidth * aspectRatio)) {
-			// limited by narrow width; restrict height
-			newWidth = viewWidth;
-			newHeight = (viewWidth * aspectRatio);
-		} else {
-			// limited by short height; restrict width
-			newWidth = (viewHeight / aspectRatio);
-			newHeight = viewHeight;
-		}
-
-		let xoff = (viewWidth - newWidth) / 2;
-		let yoff = (viewHeight - newHeight) / 2;
-
-		let txform = new android.graphics.Matrix();
-		this._textureView.getTransform(txform);
-		txform.setScale(newWidth / viewWidth, newHeight / viewHeight);
-		txform.postTranslate(xoff, yoff);
-		this._textureView.setTransform(txform);
 
 	}
 
@@ -431,12 +335,7 @@ export class Video extends VideoBase {
 			this.mediaPlayer =
 				com.google.android.exoplayer2.ExoPlayerFactory.newSimpleInstance(this._context, renderersFactory, trackSelector, this.drmSessionManager);
 
-			if (this.textureSurface && !this.textureSurfaceSet) {
-				this.textureSurfaceSet = true;
-				this.mediaPlayer.setVideoSurface(this.textureSurface);
-			} else {
-				this._setupTextureSurface();
-			}
+            this.mediaPlayer.setVideoSurfaceView(this._surfaceView);
 
 			if (this.enableSubtitles) {
 				//subtitles view
@@ -681,7 +580,7 @@ export class Video extends VideoBase {
 	public destroy() {
 		this.release();
 		this.src = null;
-		this._textureView = null;
+		this._surfaceView = null;
 		this.mediaPlayer = null;
 		this.mediaController = null;
 	}
@@ -691,7 +590,6 @@ export class Video extends VideoBase {
 		this.videoOpened = false;
 		this.eventPlaybackReady = false;
 		this.eventPlaybackStart = false;
-		this.textureSurfaceSet = false;
 
 		if (this.mediaPlayer !== null) {
 			this.mediaState = SURFACE_WAITING;
