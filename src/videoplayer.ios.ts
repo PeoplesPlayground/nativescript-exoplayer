@@ -1,5 +1,5 @@
 ﻿import { ios } from "tns-core-modules/application";
-import { Video as VideoBase, VideoFill, videoSourceProperty, fillProperty, subtitleSourceProperty } from "./videoplayer-common";
+import { Video as VideoBase, VideoFill, videoSourceProperty, fillProperty } from "./videoplayer-common";
 
 export * from "./videoplayer-common";
 
@@ -17,9 +17,6 @@ export class Video extends VideoBase {
     private _player: any; /// AVPlayer
     private _playerController: any; /// AVPlayerViewController
     private _src: string;
-    private _subtitling: any; //// ASBPlayerSubtitling
-    private _subtitleLabel: any; //// UILabel
-    private _subtitleLabelContainer: any; //// UIView
     private _didPlayToEndTimeObserver: any;
     private _didPlayToEndTimeActive: boolean;
     private _observer: NSObject;
@@ -58,13 +55,6 @@ export class Video extends VideoBase {
         this._observer = PlayerObserverClass.alloc();
         this._observer["_owner"] = this;
         this._videoFinished = false;
-
-        // subtitles setup
-        if (this.enableSubtitles) {
-            this._subtitling = new ASBPlayerSubtitling();
-
-            this._setupSubtitleLabel();
-        }
     }
 
     get ios(): any {
@@ -88,10 +78,6 @@ export class Video extends VideoBase {
       if (this._playerController) {
         this._playerController.videoGravity = videoGravity;
       }
-    }
-
-    [subtitleSourceProperty.setNative](value: NSString) {
-        this._updateSubtitles(value ? (<any>value).ios : null);
     }
 
     public _setNativeVideo(nativeVideoPlayer: any) {
@@ -147,62 +133,6 @@ export class Video extends VideoBase {
         if (!this._didPlayToEndTimeActive) {
             this._didPlayToEndTimeObserver = ios.addNotificationObserver(AVPlayerItemDidPlayToEndTimeNotification, this.AVPlayerItemDidPlayToEndTimeNotification.bind(this));
             this._didPlayToEndTimeActive = true;
-        }
-
-        if (this.enableSubtitles) {
-            // it's important to set subtitle label first and then player - to let label pick up styles
-            this._subtitling.label = this._subtitleLabel;
-            this._subtitling.containerView = this._subtitleLabelContainer;
-            this._subtitling.player = this._player;
-        }
-    }
-
-    private _setupSubtitleLabel(){
-        let contentOverlayView = this._playerController.contentOverlayView;
-        this._subtitleLabel = new UILabel();
-        this._subtitleLabelContainer = new UIView();
-
-        contentOverlayView.addSubview(this._subtitleLabelContainer);
-        this._subtitleLabelContainer.addSubview(this._subtitleLabel);
-
-        //configure subtitle container - this is required to make insets
-        this._subtitleLabelContainer.backgroundColor = UIColor.blackColor;
-        this._subtitleLabelContainer.layer.cornerRadius = 2;
-        this._subtitleLabelContainer.layer.masksToBounds = true;
-
-        // attach subtitle label to all corners of container
-        this._subtitleLabel.translatesAutoresizingMaskIntoConstraints = false;
-        this._subtitleLabelContainer.translatesAutoresizingMaskIntoConstraints = false;
-        let containerViewsDictionary = new NSDictionary([this._subtitleLabel], ['subtitleLabel']);
-
-        this._subtitleLabelContainer.addConstraints(NSLayoutConstraint.constraintsWithVisualFormatOptionsMetricsViews("H:|-(5)-[subtitleLabel]-(5)-|", NSLayoutFormatOptions.DirectionLeadingToTrailing, null, containerViewsDictionary));
-        this._subtitleLabelContainer.addConstraints(NSLayoutConstraint.constraintsWithVisualFormatOptionsMetricsViews("V:|-(0)-[subtitleLabel]-(0)-|", NSLayoutFormatOptions.DirectionLeadingToTrailing , null, containerViewsDictionary));
-
-
-        this._subtitleLabel.textColor = UIColor.whiteColor;
-        this._subtitleLabel.textAlignment = NSTextAlignment.Center;
-        this._subtitleLabel.lineBreakMode = NSLineBreakMode.ByWordWrapping;
-        this._subtitleLabel.font = UIFont.systemFontOfSizeWeight(15, UIFontWeightRegular);
-        this._subtitleLabel.numberOfLines = 0;
-
-        this._subtitleLabel.translatesAutoresizingMaskIntoConstraints = false;
-
-        let viewsDictionary = new NSDictionary([this._subtitleLabelContainer, contentOverlayView], ['subtitleLabelContainer', 'superview']);
-        // make 20 point insets from sides
-        contentOverlayView.addConstraints(NSLayoutConstraint.constraintsWithVisualFormatOptionsMetricsViews("H:|-(>=20)-[subtitleLabelContainer]-(>=20)-|", 0 , null, viewsDictionary));
-        // center text
-        contentOverlayView.addConstraints(NSLayoutConstraint.constraintsWithVisualFormatOptionsMetricsViews("V:[superview]-(<=1)-[subtitleLabelContainer]",  NSLayoutFormatOptions.AlignAllCenterX, null, viewsDictionary));
-        // add 30 point margin from bottom
-        contentOverlayView.addConstraints(NSLayoutConstraint.constraintsWithVisualFormatOptionsMetricsViews("V:[subtitleLabelContainer]-(20)-|", 0, null, viewsDictionary));
-    }
-
-    private _updateSubtitles(subtitles: NSString) {
-        if (this.enableSubtitles) {
-            try {
-                this._subtitling.loadSRTContentError(subtitles)
-            } catch (e) {
-                console.log("Failed to load subtitles: " + e); // NSError:
-            }
         }
     }
 
@@ -268,8 +198,10 @@ export class Video extends VideoBase {
 
     public getCurrentTime(): any {
         if (this._player === null) {
+            console.log("player still null");
             return false;
         }
+        console.log("player currentTime " + this._player.currentTime().value + " " + this._player.currentTime().timescale);
         return (this._player.currentTime().value / this._player.currentTime().timescale) * 1000;
     }
 

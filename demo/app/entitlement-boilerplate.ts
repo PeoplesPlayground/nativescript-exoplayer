@@ -2,5 +2,5 @@ export const entitlement = {
     manifest: "https://",
     token: "",
     licenseServer: "",
-    subtitle: ""
+    subtitles: [{src: "", lang: ""}]
 };

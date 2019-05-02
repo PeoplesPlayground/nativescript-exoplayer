@@ -105,8 +105,7 @@ export class Video extends View {
     public token: string; //
     public imgSrc: string;
     public imgType: number = 1;
-    public subtitles: string; /// subtitles source file
-    public subtitleSource: string; /// subtitle source content
+    public subtitles: {src: string, lang: string}[]; /// subtitles sources file
     public observeCurrentTime: boolean; // set to true if want to observe current time.
     public autoplay: boolean = false; /// set true for the video to start playing when ready
     public controls: boolean = true; /// set true to enable the media player's playback controls
@@ -136,17 +135,6 @@ export const imgTypeProperty = new Property<Video, any>({
     name: "imgType",
 });
 imgTypeProperty.register(Video);
-
-export const subtitlesProperty = new Property<Video, any>({
-    name: "subtitles",
-    valueChanged: onSubtitlesPropertyChanged
-});
-subtitlesProperty.register(Video);
-
-export const subtitleSourceProperty = new Property<Video, any>({
-    name: "subtitleSource",
-});
-subtitleSourceProperty.register(Video);
 
 export const videoSourceProperty = new Property<Video, any>({
     name: "videoSource",

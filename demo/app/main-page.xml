@@ -9,7 +9,7 @@
         <Video:Video id="nativeVideoPlayer" controls="true" loadingComplete="{{ videoCompleted }}" playbackStart="{{ playbackStart }}" finished="{{ videoFinished }}" loop="false" autoplay="true" height="280" fill="{{ videoFill }}"
                      src="{{ videoSrc }}"
                      token="{{ token }}"
-                     subtitles="{{ subtitlesSrc }}" row="0" colSpan="2"/>
+                     row="0" colSpan="2"/>
         <Label text="Label On Top of Video View" row="0" colSpan="2" color="#fff" horizontalAlignment="center"/>
       </GridLayout>
       <StackLayout orientation="horizontal">

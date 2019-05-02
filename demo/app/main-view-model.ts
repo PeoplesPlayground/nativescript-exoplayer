@@ -25,8 +25,8 @@ export class HelloWorldModel extends Observable {
 
     this.videoSrc = entitlement.manifest;
     this.token = entitlement.token;
+    this._videoPlayer.subtitles = entitlement.subtitles;
 
-    this.subtitlesSrc = entitlement.subtitle;
     this.trackVideoCurrentPosition();
   }
 
