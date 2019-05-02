@@ -37,7 +37,7 @@ export class Video extends VideoBase {
 	private _suspendLocation: number;
 	private _boundStart = this.resumeEvent.bind(this);
 	private _boundStop = this.suspendEvent.bind(this);
-	private enableSubtitles: boolean = false;
+	private enableSubtitles: boolean = true;
 	private downloadCache: any;
 	private downloadDirectory: any;
 
@@ -94,7 +94,7 @@ export class Video extends VideoBase {
 	}
 
 	public createNativeView(): any {
-		const nativeView = new android.widget.RelativeLayout(this._context);
+		const nativeView = new android.widget.FrameLayout(this._context);
 
         this._surfaceView = new android.view.SurfaceView(this._context);
         this._surfaceView.setSecure(true);
@@ -107,7 +107,21 @@ export class Video extends VideoBase {
 			this._subtitlesView = new com.google.android.exoplayer2.ui.SubtitleView(this._context);
 			this._subtitlesView.setUserDefaultStyle();
 			this._subtitlesView.setUserDefaultTextSize();
+            this._subtitlesView.setStyle(new com.google.android.exoplayer2.text.CaptionStyleCompat(
+                0xffffffff,
+                0x00000000,
+                0x00000000,
+                com.google.android.exoplayer2.text.CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW,
+                0xff000000,
+                android.graphics.Typeface.DEFAULT));
+
 			nativeView.addView(this._subtitlesView);
+
+            // let params = this._subtitlesView.getLayoutParams();
+            // params.addRule(14); // Center Horiz
+            // params.addRule(12); // Align bottom
+			//
+            // this._subtitlesView.setLayoutParams(params);
 		}
 
 
@@ -117,7 +131,7 @@ export class Video extends VideoBase {
 	public initNativeView(): void {
 		super.initNativeView();
 		let that = new WeakRef(this);
-		this._setupMediaController();
+		//this._setupMediaController();
 		// this._surfaceView.setOnTouchListener(new android.view.View.OnTouchListener({
 		// 	get owner(): Video {
 		// 		return that.get();
@@ -359,11 +373,11 @@ export class Video extends VideoBase {
 					case this.TYPE.DASH:
                         console.log("TYPE.DASH...");
 
-                        vs = new com.google.android.exoplayer2.source.dash.DashMediaSource.Factory(dsf).setManifestParser(new com.google.android.exoplayer2.offline.FilteringManifestParser(new com.google.android.exoplayer2.source.dash.manifest.DashManifestParser(), null))
-                            .createMediaSource(uri);
+                        // vs = new com.google.android.exoplayer2.source.dash.DashMediaSource.Factory(dsf).setManifestParser(new com.google.android.exoplayer2.offline.FilteringManifestParser(new com.google.android.exoplayer2.source.dash.manifest.DashManifestParser(), null))
+                        //     .createMediaSource(uri);
 
-						// vs = new com.google.android.exoplayer2.source.dash.DashMediaSource(uri, dsf,
-						// 	new com.google.android.exoplayer2.source.dash.DefaultDashChunkSource.Factory(dsf), null, null);
+						vs = new com.google.android.exoplayer2.source.dash.DashMediaSource(uri, dsf,
+							new com.google.android.exoplayer2.source.dash.DefaultDashChunkSource.Factory(dsf), null, null);
 						break;
 					case this.TYPE.HLS:
 						vs = new com.google.android.exoplayer2.source.hls.HlsMediaSource(uri, dsf, null, null);
@@ -404,35 +418,31 @@ export class Video extends VideoBase {
 
 			// subtitles src
 
-			try {
-				if (this._subtitlesSrc != null && this._subtitlesSrc.trim() != "") {
-					let subtitleUri = android.net.Uri.parse(this._subtitlesSrc.trim());
+            if (this.enableSubtitles) {
+                try {
+                    if (this._subtitlesSrc != null && this._subtitlesSrc.trim() != "") {
+                        console.log("Set subtitle " + this._subtitlesSrc);
+                        let subtitleUri = android.net.Uri.parse(this._subtitlesSrc.trim());
 
-					let textFormat = com.google.android.exoplayer2.Format.createTextSampleFormat(
-						null,
-						com.google.android.exoplayer2.util.MimeTypes.APPLICATION_SUBRIP,
-						null,
-						com.google.android.exoplayer2.Format.NO_VALUE,
-						com.google.android.exoplayer2.Format.NO_VALUE,
-						"en",
-						null);
+                        let textFormat = com.google.android.exoplayer2.Format.createTextSampleFormat(null, com.google.android.exoplayer2.util.MimeTypes.TEXT_VTT,
+                            com.google.android.exoplayer2.Format.NO_VALUE, "en");
 
-					let subtitlesSrc = new com.google.android.exoplayer2.source.SingleSampleMediaSource(
-						subtitleUri,
-						dsf,
-						textFormat,
-						com.google.android.exoplayer2.C.TIME_UNSET);
+                        let subtitlesSrc = new com.google.android.exoplayer2.source.SingleSampleMediaSource(
+                            subtitleUri,
+                            dsf,
+                            textFormat,
+                            com.google.android.exoplayer2.C.TIME_UNSET);
 
-					let mergedArray = (<any>Array).create(com.google.android.exoplayer2.source.MediaSource, 2);
-					mergedArray[0] = vs;
-					mergedArray[1] = subtitlesSrc;
+                        let mergedArray = (<any>Array).create(com.google.android.exoplayer2.source.MediaSource, 2);
+                        mergedArray[0] = vs;
+                        mergedArray[1] = subtitlesSrc;
 
-					vs = new com.google.android.exoplayer2.source.MergingMediaSource(mergedArray) //constructor is vararg
-				}
-			} catch (ex) {
-				console.log("Error loading subtitles:", ex, ex.stack);
-			}
-
+                        vs = new com.google.android.exoplayer2.source.MergingMediaSource(mergedArray); //constructor is vararg
+                    }
+                } catch (ex) {
+                    console.log("Error loading subtitles:", ex, ex.stack);
+                }
+            }
 
 			if (this.mediaController) {
 				this.mediaController.setPlayer(this.mediaPlayer);
@@ -650,8 +660,10 @@ export class Video extends VideoBase {
 	}
 
     private buildDataSourceFactory() {
-        const upstreamFactory = new com.google.android.exoplayer2.upstream.DefaultDataSourceFactory(this._context, new com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory(com.google.android.exoplayer2.util.Util.getUserAgent(this._context, "ExoPlayerDemo")));
-        return this.buildReadOnlyCacheDataSource(upstreamFactory, this.getDownloadCache());
+        // const upstreamFactory = new com.google.android.exoplayer2.upstream.DefaultDataSourceFactory(this._context, new com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory(com.google.android.exoplayer2.util.Util.getUserAgent(this._context, "ExoPlayerDemo")));
+        // return this.buildReadOnlyCacheDataSource(upstreamFactory, this.getDownloadCache());
+        //
+        return new com.google.android.exoplayer2.upstream.DefaultDataSourceFactory(this._context, "NativeScript");
     }
 
 

@@ -26,16 +26,16 @@ export class HelloWorldModel extends Observable {
     this.videoSrc = entitlement.manifest;
     this.token = entitlement.token;
 
-    this.subtitlesSrc = "~/videos/sample.srt";
+    this.subtitlesSrc = entitlement.subtitle;
     this.trackVideoCurrentPosition();
   }
 
   public setEnglishSubtitles() {
-    this._videoPlayer.subtitles = "~/videos/sample.srt";
+    this._videoPlayer.subtitles = "~/videos/test.vtt";
   }
 
   public setRussianSubtitles() {
-    this._videoPlayer.subtitles = "~/videos/sample-ru.srt";
+    this._videoPlayer.subtitles = "~/videos/test.vtt";
   }
 
   public disableSubtitles() {

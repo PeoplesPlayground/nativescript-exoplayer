@@ -29,7 +29,7 @@ export class Video extends VideoBase {
     private _playbackTimeObserverActive: boolean;
     private _videoPlaying: boolean;
     private _videoFinished: boolean;
-    private enableSubtitles: boolean = false;
+    private enableSubtitles: boolean = true;
     public nativeView: any;
 
     constructor() {
