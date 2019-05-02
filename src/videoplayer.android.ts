@@ -89,7 +89,7 @@ export class Video extends VideoBase {
     }
 
 	public createNativeView(): any {
-		const nativeView = new android.widget.FrameLayout(this._context);
+		const nativeView = new android.widget.RelativeLayout(this._context);
 
         this._surfaceView = new android.view.SurfaceView(this._context);
         this._surfaceView.setSecure(true);
@@ -126,18 +126,18 @@ export class Video extends VideoBase {
 	public initNativeView(): void {
 		super.initNativeView();
 		let that = new WeakRef(this);
-		//this._setupMediaController();
-		// this._surfaceView.setOnTouchListener(new android.view.View.OnTouchListener({
-		// 	get owner(): Video {
-		// 		return that.get();
-		// 	},
-		// 	onTouch: function (/* view, event */) {
-		// 		if (this.owner) {
-		// 			this.owner.toggleMediaControllerVisibility();
-		// 		}
-		// 		return false;
-		// 	}
-		// }));
+		this._setupMediaController();
+		this._surfaceView.setOnTouchListener(new android.view.View.OnTouchListener({
+			get owner(): Video {
+				return that.get();
+			},
+			onTouch: function (/* view, event */) {
+				if (this.owner) {
+					this.owner.toggleMediaControllerVisibility();
+				}
+				return false;
+			}
+		}));
 
 		nsApp.on(nsApp.suspendEvent, this._boundStop);
 		nsApp.on(nsApp.resumeEvent, this._boundStart);
