@@ -1,5 +1,6 @@
 export const entitlement = {
-    manifest: "https://",
+    dash: "https://...mpd",
+    hls: "https://...m3u8",
     token: "",
     licenseServer: "",
     subtitles: [{src: "", lang: ""}]

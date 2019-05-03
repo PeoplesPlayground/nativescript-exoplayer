@@ -302,10 +302,10 @@ export class Video extends VideoBase {
 			this.startCurrentTimer();
 		}
 
-        if (com.google.android.exoplayer2.util.Util.maybeRequestReadExternalStoragePermission(/* activity= */ this._context, [android.net.Uri.parse(this._src)])) {
-            // The player will be reinitialized if the permission is granted.
-            return;
-        }
+        // if (com.google.android.exoplayer2.util.Util.maybeRequestReadExternalStoragePermission(/* activity= */ this._context, [android.net.Uri.parse(this._src)])) {
+        //     // The player will be reinitialized if the permission is granted.
+        //     return;
+        // }
 
 		this.videoOpened = true; // we don't want to come back in here from texture system...
 

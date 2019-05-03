@@ -23,7 +23,7 @@ export class HelloWorldModel extends Observable {
     this.currentTime = "";
     this.videoDuration = "";
 
-    this.videoSrc = entitlement.manifest;
+    this.videoSrc = isAndroid ? entitlement.dash : entitlement.hls;
     this.token = entitlement.token;
     this._videoPlayer.subtitles = entitlement.subtitles;
 

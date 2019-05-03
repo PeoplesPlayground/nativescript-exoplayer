@@ -201,7 +201,6 @@ export class Video extends VideoBase {
             console.log("player still null");
             return false;
         }
-        console.log("player currentTime " + this._player.currentTime().value + " " + this._player.currentTime().timescale);
         return (this._player.currentTime().value / this._player.currentTime().timescale) * 1000;
     }
 
