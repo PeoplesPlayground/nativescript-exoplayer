@@ -25,6 +25,7 @@ export class HelloWorldModel extends Observable {
 
     this.videoSrc = isAndroid ? entitlement.dash : entitlement.hls;
     this.token = entitlement.token;
+    this._videoPlayer.drmLicenseUrl = entitlement.drmLicenseUrl;
     this._videoPlayer.subtitles = entitlement.subtitles;
 
     this.trackVideoCurrentPosition();

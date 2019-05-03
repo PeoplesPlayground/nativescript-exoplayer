@@ -317,11 +317,10 @@ export class Video extends VideoBase {
 			let trackSelector = new com.google.android.exoplayer2.trackselection.DefaultTrackSelector(trackSelection);
 			let loadControl = new com.google.android.exoplayer2.DefaultLoadControl();
 
-			let drmLicenseUrl = "https://audienceplayer.keydelivery.westeurope.media.azure.net/Widevine/?kid=2c8b81cd-0278-4665-b2a2-17dd6a9fa575";
 			let drmSchemeUuid = com.google.android.exoplayer2.util.Util.getDrmUuid("widevine");
 
             let licenseDataSourceFactory = new com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory(com.google.android.exoplayer2.util.Util.getUserAgent(this._context, "ExoPlayerDemo"));
-            let drmCallback = new com.google.android.exoplayer2.drm.HttpMediaDrmCallback(drmLicenseUrl, licenseDataSourceFactory);
+            let drmCallback = new com.google.android.exoplayer2.drm.HttpMediaDrmCallback(this.drmLicenseUrl, licenseDataSourceFactory);
 
             let token = this._token;
 

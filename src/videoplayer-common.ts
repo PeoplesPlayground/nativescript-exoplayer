@@ -106,6 +106,7 @@ export class Video extends View {
     public imgSrc: string;
     public imgType: number = 1;
     public subtitles: {src: string, lang: string}[]; /// subtitles sources file
+    public drmLicenseUrl: string;
     public observeCurrentTime: boolean; // set to true if want to observe current time.
     public autoplay: boolean = false; /// set true for the video to start playing when ready
     public controls: boolean = true; /// set true to enable the media player's playback controls
