@@ -77,6 +77,7 @@ export class Video extends VideoBase {
 	}
 
     [srcProperty.setNative](value) {
+		console.log('srcProperty.setNative ' + value);
         this._setNativeVideo(value);
     }
 

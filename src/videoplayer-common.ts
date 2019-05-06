@@ -6,26 +6,6 @@ import * as imageSource from "tns-core-modules/image-source";
 // on Android we explicitly set propertySettings to None because android will invalidate its layout (skip unnecessary native call).
 // var AffectsLayout = platform.device.os === platform.platformNames.android ? dependencyObservable.PropertyMetadataSettings.None : dependencyObservable.PropertyMetadataSettings.AffectsLayout;
 
-function onSrcPropertyChanged(view, oldValue, newValue) {
-
-    const video = view;
-    let value = newValue;
-
-    if (isString(value)) {
-        value = value.trim();
-        video.videoSource = value;
-        video.isLoadingProperty = true;
-    }
-}
-
-function onSubtitlesPropertyChanged(view, oldValue, newValue) {
-    const video = view;
-    if (isString(newValue)) {
-        let value = newValue.trim();
-        video.subtitleSource = value;
-    }
-}
-
 function onImgSrcPropertyChanged(view, oldValue, newValue) {
     const video = view;
     let value = newValue;
@@ -44,16 +24,6 @@ function onImgSrcPropertyChanged(view, oldValue, newValue) {
         video.imageSource = value;
     } else {
         video.imageSource = imageSource.fromNativeSource(value);
-    }
-}
-
-function onTokenPropertyChanged(view, oldValue, newValue) {
-    const video = view;
-    let value = newValue;
-
-    if (isString(value)) {
-        value = value.trim();
-        video.token = value;
     }
 }
 

@@ -1,7 +1,11 @@
 import { NgModule } from "@angular/core";
-import { registerElement } from "nativescript-angular/element-registry";
+import {NativescriptExoplayerComponent} from './nativescript-exoplayer.component';
 
-@NgModule()
-export class NativescriptExoplayerModule { }
+@NgModule({
+    declarations: [NativescriptExoplayerComponent],
+    exports: [NativescriptExoplayerComponent]
+})
+export class NativescriptExoplayerModule {
+}
 
-registerElement("exoplayer", () => require("../videoplayer-common").Video);
+
