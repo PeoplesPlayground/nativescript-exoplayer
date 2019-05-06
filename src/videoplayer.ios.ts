@@ -1,5 +1,5 @@
 ﻿import { ios } from "tns-core-modules/application";
-import { Video as VideoBase, VideoFill, videoSourceProperty, fillProperty } from "./videoplayer-common";
+import { Video as VideoBase, VideoFill, srcProperty, videoSourceProperty, fillProperty } from "./videoplayer-common";
 
 export * from "./videoplayer-common";
 
@@ -7,16 +7,15 @@ declare const
     NSURL,
     NSDictionary,
     AVPlayer,
-    ASBPlayerSubtitling,
     AVPlayerViewController,
-    UIView,
-    UILabel,
+    AVAudioSession,
+    AVAudioSessionCategoryPlayAndRecord,
+    AVAudioSessionPortOverride,
     CMTimeMake;
 
 export class Video extends VideoBase {
     private _player: any; /// AVPlayer
     private _playerController: any; /// AVPlayerViewController
-    private _src: string;
     private _didPlayToEndTimeObserver: any;
     private _didPlayToEndTimeActive: boolean;
     private _observer: NSObject;
@@ -59,6 +58,10 @@ export class Video extends VideoBase {
 
     get ios(): any {
         return this.nativeView;
+    }
+
+    [srcProperty.setNative](value: any) {
+        this._setNativePlayerSource(value);
     }
 
     [videoSourceProperty.setNative](value: AVPlayerItem) {
@@ -108,10 +111,10 @@ export class Video extends VideoBase {
     }
 
     public _setNativePlayerSource(nativePlayerSrc: string) {
-        this._src = nativePlayerSrc;
-        let url: string = NSURL.URLWithString(this._src);
+        this.src = nativePlayerSrc;
+        let url: string = NSURL.URLWithString(this.src);
         this._player = new AVPlayer(url);
-        //console.log("Video src: "+ this._src);
+        console.log("Video src: "+ this.src);
         this._init();
     }
 
@@ -191,9 +194,13 @@ export class Video extends VideoBase {
     }
 
     public getDuration(): number {
-        let seconds = CMTimeGetSeconds(this._player.currentItem.asset.duration);
-        let milliseconds = seconds * 1000.0;
-        return milliseconds;
+        if (this._player && this._player.currentItem && this._player.currentItem.asset) {
+            let seconds = CMTimeGetSeconds(this._player.currentItem.asset.duration);
+            let milliseconds = seconds * 1000.0;
+            return milliseconds;
+        }
+        console.log("player.currentItem.asset null");
+        return 0;
     }
 
     public getCurrentTime(): any {

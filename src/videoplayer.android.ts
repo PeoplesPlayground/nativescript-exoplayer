@@ -1,11 +1,11 @@
 ﻿
-import { Video as VideoBase, VideoFill, videoSourceProperty, tokenProperty } from "./videoplayer-common";
+import { Video as VideoBase, VideoFill, srcProperty, videoSourceProperty, tokenProperty } from "./videoplayer-common";
 import * as nsUtils from "tns-core-modules/utils/utils";
 import * as nsApp from "tns-core-modules/application";
 
 export * from "./videoplayer-common";
 
-declare const android: any, com: any;
+declare const android: any, com: any, java: any;
 
 // States from Exo Player
 const STATE_IDLE: number = 1;
@@ -21,8 +21,6 @@ export class Video extends VideoBase {
 	private _subtitlesView: any; /// com.google.android.exoplayer2.ui.SubtitleView
 	private videoWidth: number;
 	private videoHeight: number;
-	private _src: any;
-    private _token: any;
 	private mediaState: number;
 	private mediaPlayer: any;
 	private mediaController: any;
@@ -55,8 +53,6 @@ export class Video extends VideoBase {
 		this._onReadyEmitEvent = [];
 		this._suspendLocation = null;
 
-		this._src = null;
-
 		this.mediaState = SURFACE_WAITING;
 		this.mediaPlayer = null;
 		this.mediaController = null;
@@ -79,6 +75,10 @@ export class Video extends VideoBase {
 	get android(): any {
 		return this.nativeView;
 	}
+
+    [srcProperty.setNative](value) {
+        this._setNativeVideo(value);
+    }
 
 	[videoSourceProperty.setNative](value) {
 		this._setNativeVideo(value ? value.android : null);
@@ -291,9 +291,9 @@ export class Video extends VideoBase {
 		}
 	}
 
-	private _openVideo(): void {
-		if (!(this._src && this._token)) {
-			console.log("!src and token: " + this._src  + ", " + this._token);
+	public _openVideo(): void {
+		if (!(this.src && this.token)) {
+			console.log("!src and token: " + this.src  + ", " + this.token);
 			return;
 		}
 		this.release();
@@ -322,7 +322,7 @@ export class Video extends VideoBase {
             let licenseDataSourceFactory = new com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory(com.google.android.exoplayer2.util.Util.getUserAgent(this._context, "ExoPlayerDemo"));
             let drmCallback = new com.google.android.exoplayer2.drm.HttpMediaDrmCallback(this.drmLicenseUrl, licenseDataSourceFactory);
 
-            let token = this._token;
+            let token = this.token;
 
             drmCallback.setKeyRequestProperty("Authorization", "Bearer=" + token);
 
@@ -355,10 +355,10 @@ export class Video extends VideoBase {
 			let ef = new com.google.android.exoplayer2.extractor.DefaultExtractorsFactory();
 
 			let vs, uri;
-			if (this._src instanceof String || typeof this._src === "string") {
-				uri = android.net.Uri.parse(this._src);
+			if (typeof this.src === "string") {
+				uri = android.net.Uri.parse(this.src);
 
-				const type = this._detectTypeFromSrc(this._src);
+				const type = this._detectTypeFromSrc(this.src);
 				switch (type) {
 					case this.TYPE.SS:
 						vs = new com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource(uri, dsf,
@@ -383,31 +383,6 @@ export class Video extends VideoBase {
 				/* if (this.loop) {
 					vs = new com.google.android.exoplayer2.source.LoopingMediaSource(vs);
 				} */
-			} else if (typeof this._src.typeSource === "number") {
-				uri = android.net.Uri.parse(this._src.url);
-				switch (this._src.typeSource) {
-					case this.TYPE.SS:
-						vs = new com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource(uri, dsf,
-							new com.google.android.exoplayer2.source.smoothstreaming.DefaultSsChunkSource.Factory(dsf), null, null);
-						break;
-					case this.TYPE.DASH:
-						vs = new com.google.android.exoplayer2.source.dash.DashMediaSource(uri, dsf,
-							new com.google.android.exoplayer2.source.dash.DefaultDashChunkSource.Factory(dsf), null, null);
-						break;
-					case this.TYPE.HLS:
-						vs = new com.google.android.exoplayer2.source.hls.HlsMediaSource(uri, dsf, null, null);
-						break;
-					default:
-						vs = new com.google.android.exoplayer2.source.ExtractorMediaSource(uri, dsf, ef, null, null, null);
-				}
-
-				/* if (this.loop) {
-					vs = new com.google.android.exoplayer2.source.LoopingMediaSource(vs);
-				} */
-
-
-			} else {
-				vs = this._src;
 			}
 
 			// subtitles src
@@ -467,19 +442,22 @@ export class Video extends VideoBase {
 	}
 
 	public _setNativeVideo(nativeVideo: any): void {
-		this._src = nativeVideo;
+        console.log("_setNativeVideo " + nativeVideo);
+		this.src = nativeVideo;
 		this._suspendLocation = 0;
 		this._openVideo();
 	}
 
     public _setNativeToken(token: any): void {
-        this._token = token;
+        console.log("_setNativeToken " + token);
+        this.token = token;
         this._suspendLocation = 0;
         this._openVideo();
     }
 
 	public setNativeSource(nativePlayerSrc: string): void {
-		this._src = nativePlayerSrc;
+		console.log("Deprecated setNativeSource");
+		//this._src = nativePlayerSrc;
 		this._suspendLocation = 0;
 		this._openVideo();
 	}

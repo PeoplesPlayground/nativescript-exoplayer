@@ -1,6 +1,4 @@
-﻿import * as videoSource from "./video-source/video-source";
-import * as subtitleSource from "./subtitle-source/subtitle-source";
-import { isFileOrResourcePath } from "tns-core-modules/utils/utils";
+﻿import { isFileOrResourcePath } from "tns-core-modules/utils/utils";
 import { isString } from "tns-core-modules/utils/types"
 import { View, Property, booleanConverter } from "tns-core-modules/ui/core/view";
 import * as imageSource from "tns-core-modules/image-source";
@@ -15,22 +13,8 @@ function onSrcPropertyChanged(view, oldValue, newValue) {
 
     if (isString(value)) {
         value = value.trim();
-        video.videoSource = null;
-        video["_url"] = value;
-        video.isLoadingProperty = true;
-        if (isFileOrResourcePath(value)) {
-            video.videoSource = videoSource.fromFileOrResource(value);
-            video.isLoadingProperty = false;
-        } else {
-            if (video["_url"] === value) {
-                video.videoSource = videoSource.fromUrl(value);
-                video.isLoadingProperty = false;
-            }
-        }
-    } else if (value instanceof videoSource.VideoSource) {
         video.videoSource = value;
-    } else {
-        video.videoSource = videoSource.fromNativeSource(value);
+        video.isLoadingProperty = true;
     }
 }
 
@@ -38,12 +22,7 @@ function onSubtitlesPropertyChanged(view, oldValue, newValue) {
     const video = view;
     if (isString(newValue)) {
         let value = newValue.trim();
-        video.subtitleSource = null;
-        if (isFileOrResourcePath(value)){
-            video.subtitleSource = subtitleSource.fromFileOrResource(value);
-        } else {
-            video.subtitleSource = subtitleSource.fromUrl(value);
-        }
+        video.subtitleSource = value;
     }
 }
 
@@ -53,16 +32,13 @@ function onImgSrcPropertyChanged(view, oldValue, newValue) {
 
     if (isString(value)) {
         value = value.trim();
-        video["_url"] = value;
         video.isLoadingProperty = true;
         if (isFileOrResourcePath(value)) {
             video.imageSource = imageSource.fromFileOrResource(value);
             video.isLoadingProperty = false;
         } else {
-            if (video["_url"] === value) {
-                video.imageSource = imageSource.fromUrl(value);
-                video.isLoadingProperty = false;
-            }
+            video.imageSource = imageSource.fromUrl(value);
+            video.isLoadingProperty = false;
         }
     } else if (value instanceof imageSource.ImageSource) {
         video.imageSource = value;
@@ -78,7 +54,6 @@ function onTokenPropertyChanged(view, oldValue, newValue) {
     if (isString(value)) {
         value = value.trim();
         video.token = value;
-        video["_token"] = value;
     }
 }
 
@@ -122,7 +97,6 @@ export class Video extends View {
 
 export const srcProperty = new Property<Video, any>({
     name: "src",
-    valueChanged: onSrcPropertyChanged
 });
 srcProperty.register(Video);
 
@@ -149,7 +123,6 @@ imageSourceProperty.register(Video);
 
 export const tokenProperty = new Property<Video, any>({
     name: "token",
-    valueChanged: onTokenPropertyChanged
 });
 tokenProperty.register(Video);
 
