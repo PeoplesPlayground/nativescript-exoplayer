@@ -1,0 +1,7 @@
+<ActionBar [title]="title"></ActionBar>
+<StackLayout  class="p-20">
+    <Label text="Welcome to {{ title }}!" class="h1 text-center" textWrap="true"></Label>
+    <exoplayer [entitlement]="entitlement"></exoplayer>
+    <Label text="{{ entitlement.manifest }}" class="text-center" textWrap="true"></Label>
+
+</StackLayout>

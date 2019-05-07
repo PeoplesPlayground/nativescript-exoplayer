@@ -18,9 +18,10 @@ export declare class Video extends View {
    * video source file
    */
   src: string;
+  token: string;
   imgSrc: string;
   imgType: number;
-  subtitles: string;
+  subtitles: string[];
   subtitleSource: string;
   // observeCurrentTime: boolean;
 

@@ -332,7 +332,7 @@ export class Video extends VideoBase {
                 this.mediaDrm = null;
             }
 
-            console.log("This far, using token: " + token);
+            console.log("This far " + this.src + " using token: " + token);
 
             this.mediaDrm = com.google.android.exoplayer2.drm.FrameworkMediaDrm.newInstance(drmSchemeUuid);
             // DefaultDrmSessionManager<FrameworkMediaCrypto> drmSessionManager = null;
